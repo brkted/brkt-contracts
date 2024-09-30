@@ -171,10 +171,9 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
 
         // Add multiplier to all match predictions the user has made
         uint8[] memory predictions = userBracketPredictions[_registrant];
-        for (uint256 i = 0; i  < predictions.length; i ++) {
+        for (uint256 i = 0; i < predictions.length; i++) {
             uint8 _teamId = predictions[i];
-            matchPredictionsToMultipliers[i][_teamId] = matchPredictionsToMultipliers[i][_teamId]
-                .add(_multiplier);
+            matchPredictionsToMultipliers[i][_teamId] = matchPredictionsToMultipliers[i][_teamId].add(_multiplier);
         }
     }
 
@@ -209,10 +208,9 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
 
         // Add multiplier to all match predictions the user has made
         uint8[] memory predictions = userBracketPredictions[_registrant];
-        for (uint256 i = 0; i  < predictions.length; i ++) {
+        for (uint256 i = 0; i < predictions.length; i++) {
             uint8 _teamId = predictions[i];
-            matchPredictionsToMultipliers[i][_teamId] = matchPredictionsToMultipliers[i][_teamId]
-                .add(_multiplier);
+            matchPredictionsToMultipliers[i][_teamId] = matchPredictionsToMultipliers[i][_teamId].add(_multiplier);
         }
     }
 
@@ -299,6 +297,26 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
         emit UserClaimedRewards(msg.sender, pendingRewards);
     }
 
+    function claimProtocolFees() external whenCompleted onlyOwner {
+        uint256 protocolFeeCaptured = calculateProtocolFeeCaptured();
+        if (protocolFeeCaptured == 0) {
+            revert NoProtocolFeesCaptured();
+        }
+        if (registrationFeeInfo.isNetworkToken) {
+            payable(owner()).transfer(protocolFeeCaptured);
+        } else {
+            IERC20(registrationFeeInfo.paymentToken).transfer(owner(), protocolFeeCaptured);
+        }
+        emit ProtocolFeesClaimed(owner(), protocolFeeCaptured);
+    }
+
+    function _completeMatch(uint256 _matchId, uint8 _winningTeamId) internal virtual override {
+        super._completeMatch(_matchId, _winningTeamId);
+        if (matchPredictionsToMultipliers[_matchId][_winningTeamId].intoUint256() == 0) {
+            matchPredictionsToMultipliers[_matchId][_winningTeamId] = _multiplierUnit();
+        }
+    }
+
     /**
      * @inheritdoc IPaidPredictableCompetition
      */
@@ -306,9 +324,18 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
         // Don't calculate pending rewards if the user has already claimed them, or if the competition hasn't finished yet
         if (!claimedRewards[_user] && hasFinished) {
             uint256 percentOfTotal = _getUserScorePercent(_user);
-            // percentOfTotal is a number between 0 and 10000, so we divide by 10000 to get the relative amount of token
-            pendingRewards_ = totalRegistrationReserves * percentOfTotal / 10000;
+            // percentOfTotal is a number between 0 and 1e6, so we divide by 1e6 to get the relative amount of token
+            pendingRewards_ = totalRegistrationReserves * percentOfTotal / 1e6;
+            if (competitionFactory.protocolFee() > 0) {
+                pendingRewards_ = mulDiv(totalRegistrationReserves, 1e6 - competitionFactory.protocolFee(), 1e6)
+                    * percentOfTotal / 1e6;
+            }
         }
+    }
+
+    function calculateProtocolFeeCaptured() public view override returns (uint256 protocolFeeCaptured_) {
+        protocolFeeCaptured_ =
+            totalRegistrationReserves - mulDiv(totalRegistrationReserves, 1e6 - competitionFactory.protocolFee(), 1e6);
     }
 
     /**
@@ -379,21 +406,6 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
         override
         returns (uint256 totalPoints_)
     {
-        // console.log("multiplier unit: ", _multiplierUnit().intoUint256());
-        // console.log("_pointsPerMatchCur %s", _pointsPerMatchCur);
-        // console.log("deployer points %s, leet points %s, bob points %s", _getUserPointsPerMatch(0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496,_pointsPerMatchCur), _getUserPointsPerMatch(0x0000000000000000000000000000000000001337,_pointsPerMatchCur), _getUserPointsPerMatch(0x0000000000000000000000000000000000000B0b,_pointsPerMatchCur));
-        // console.log(
-        //     "match %s team %s base totalPoints: ",
-        //     _matchIndex,
-        //     _winningTeamId,
-        //     super._getTotalPoints(_pointsPerMatchCur, _matchIndex, _winningTeamId)
-        // );
-        // console.log(
-        //     "match %s team %s multiplier: ",
-        //     _matchIndex,
-        //     _winningTeamId,
-        //     matchPredictionsToMultipliers[_matchIndex][_winningTeamId].sub(_multiplierUnit()).intoUint256()
-        // );
         // Multiply total points by the multipliers of every correct user match prediction
         totalPoints_ = ud(super._getTotalPoints(_pointsPerMatchCur, _matchIndex, _winningTeamId)).add(
             ud(_pointsPerMatchCur).mul(

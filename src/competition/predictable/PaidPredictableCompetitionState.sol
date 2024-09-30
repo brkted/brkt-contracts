@@ -25,6 +25,9 @@ abstract contract PaidPredictableCompetitionState is PredictableCompetition {
     error UserNotRegistered(address user);
     error NoPendingRewards(address user);
     error SafeTransferEthFailed();
+    error NoProtocolFeesCaptured();
+
+    event ProtocolFeesClaimed(address _owner, uint256 _amount);
 
     /**
      * @notice The total amount of registration fees collected through users creating bracket predictions
@@ -57,4 +60,3 @@ abstract contract PaidPredictableCompetitionState is PredictableCompetition {
 
     constructor(address _competitionFactory) PredictableCompetition(_competitionFactory) {}
 }
-

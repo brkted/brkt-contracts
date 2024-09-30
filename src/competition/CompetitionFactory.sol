@@ -34,7 +34,7 @@ contract CompetitionFactory is ICompetitionFactory, Ownable {
     /**
      * @dev The fee associated to running a competition, in bps
      */
-    uint256 protocolFee;
+    uint256 public override protocolFee;
 
     constructor(address _owner) {
         transferOwnership(_owner);

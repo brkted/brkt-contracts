@@ -88,7 +88,10 @@ contract PredictableCompetition is PredictableCompetitionState, IPredictableComp
         for (uint256 i = 0; i < endingMatch; i++) {
             if (bracketProgression[i].isCompleted) {
                 console.log(
-                    "match %s team %s points: ", i, bracketProgression[i].winningTeamId, _getTotalPoints(pointsPerMatchCur, i, bracketProgression[i].winningTeamId)
+                    "match %s team %s points: ",
+                    i,
+                    bracketProgression[i].winningTeamId,
+                    _getTotalPoints(pointsPerMatchCur, i, bracketProgression[i].winningTeamId)
                 );
                 totalScore_ += _getTotalPoints(pointsPerMatchCur, i, bracketProgression[i].winningTeamId);
             }
@@ -228,8 +231,8 @@ contract PredictableCompetition is PredictableCompetitionState, IPredictableComp
                 }
             }
         }
-        // Return the score as a percentage of the total possible score with 4 decimal places of precision
-        scorePercent_ = (userPoints * 10000) / totalPoints;
+        // Return the score as a percentage of the total possible score with 6 decimal places of precision
+        scorePercent_ = (userPoints * 1e6) / totalPoints;
     }
 
     /**

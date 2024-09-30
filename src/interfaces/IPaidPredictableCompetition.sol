@@ -123,4 +123,15 @@ interface IPaidPredictableCompetition is IPredictableCompetition {
      * @return The payment multiplier for the user
      */
     function getUserPaymentMultiplier(address _user) external view returns (UD60x18);
+
+    /**
+     * @dev Calculates the total amount of protocol fees captured by the competition, to be claimed by the owner.
+     */
+    function calculateProtocolFeeCaptured() external view returns (uint256);
+
+    /**
+     * @dev Allows the owner to claim the protocol fees captured by the competition after the competition has
+     * successfully ended.
+     */
+    function claimProtocolFees() external;
 }

@@ -21,6 +21,8 @@ struct CompetitionInfo {
 interface ICompetitionFactory {
     event CompetitionCreated(address sender, bytes32 indexed competitionId, address indexed addr, CompetitionImpl impl);
 
+    function protocolFee() external view returns (uint256);
+
     /**
      * @dev Assumes that the impl type requires only `_numTeams` as a constructor arg
      * @param _competitionId The unique id of the competition

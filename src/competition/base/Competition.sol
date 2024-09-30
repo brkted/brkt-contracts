@@ -169,7 +169,7 @@ contract Competition is CompetitionState, ICompetition {
         }
     }
 
-    function _completeMatch(uint256 _matchId, uint8 _winningTeamId) internal {
+    function _completeMatch(uint256 _matchId, uint8 _winningTeamId) internal virtual {
         uint256 matchesCur = _getCurRoundMatchesNum();
         uint256 startingIdx = numTeams - _getTeamSizeCur();
         if (_matchId >= matchesCur + startingIdx || _matchId < startingIdx) {
