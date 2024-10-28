@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.26;
 
-import "forge-std/console.sol";
-
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -87,12 +85,6 @@ contract PredictableCompetition is PredictableCompetitionState, IPredictableComp
         uint256 pointsPerMatchCur = totalPointsPerRound / numMatches;
         for (uint256 i = 0; i < endingMatch; i++) {
             if (bracketProgression[i].isCompleted) {
-                console.log(
-                    "match %s team %s points: ",
-                    i,
-                    bracketProgression[i].winningTeamId,
-                    _getTotalPoints(pointsPerMatchCur, i, bracketProgression[i].winningTeamId)
-                );
                 totalScore_ += _getTotalPoints(pointsPerMatchCur, i, bracketProgression[i].winningTeamId);
             }
             // Update the points and matches per round when we reach the end of each round
@@ -232,7 +224,9 @@ contract PredictableCompetition is PredictableCompetitionState, IPredictableComp
             }
         }
         // Return the score as a percentage of the total possible score with 6 decimal places of precision
-        scorePercent_ = (userPoints * 1e6) / totalPoints;
+        if(totalPoints != 0) {
+            scorePercent_ = (userPoints * 1e6) / totalPoints;
+        }
     }
 
     /**

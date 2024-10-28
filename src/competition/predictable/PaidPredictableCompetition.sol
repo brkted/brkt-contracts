@@ -2,10 +2,9 @@
 
 pragma solidity ^0.8.26;
 
-import "forge-std/console.sol";
-
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {UD60x18, ud} from "@prb/math/UD60x18.sol";
 import {mulDiv} from "@prb/math/Common.sol";
@@ -26,6 +25,7 @@ import {IPredictableCompetition} from "src/interfaces/IPredictableCompetition.so
 contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPredictableCompetition {
     using EnumerableSet for EnumerableSet.AddressSet;
     using BitMaps for BitMaps.BitMap;
+    using SafeERC20 for IERC20;
 
     constructor(address _competitionFactory) PaidPredictableCompetitionState(_competitionFactory) {}
 
@@ -273,7 +273,7 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
         if (registrationFeeInfo.isNetworkToken) {
             _safeTransferETH(msg.sender, _paid);
         } else {
-            IERC20(registrationFeeInfo.paymentToken).transfer(msg.sender, _paid);
+            IERC20(registrationFeeInfo.paymentToken).safeTransfer(msg.sender, _paid);
         }
         totalRegistrationReserves -= _paid;
 
@@ -290,9 +290,9 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
         }
         claimedRewards[msg.sender] = true;
         if (registrationFeeInfo.isNetworkToken) {
-            payable(msg.sender).transfer(pendingRewards);
+            _safeTransferETH(msg.sender, pendingRewards);
         } else {
-            IERC20(registrationFeeInfo.paymentToken).transfer(msg.sender, pendingRewards);
+            IERC20(registrationFeeInfo.paymentToken).safeTransfer(msg.sender, pendingRewards);
         }
         emit UserClaimedRewards(msg.sender, pendingRewards);
     }
@@ -303,9 +303,9 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
             revert NoProtocolFeesCaptured();
         }
         if (registrationFeeInfo.isNetworkToken) {
-            payable(owner()).transfer(protocolFeeCaptured);
+            _safeTransferETH(owner(), protocolFeeCaptured);
         } else {
-            IERC20(registrationFeeInfo.paymentToken).transfer(owner(), protocolFeeCaptured);
+            IERC20(registrationFeeInfo.paymentToken).safeTransfer(owner(), protocolFeeCaptured);
         }
         emit ProtocolFeesClaimed(owner(), protocolFeeCaptured);
     }
@@ -406,6 +406,10 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
         override
         returns (uint256 totalPoints_)
     {
+        UD60x18 _totalMultiplier = matchPredictionsToMultipliers[_matchIndex][_winningTeamId].sub(_multiplierUnit());
+        if (_totalMultiplier == ud(0)) {
+            _totalMultiplier = ud(1);
+        }
         // Multiply total points by the multipliers of every correct user match prediction
         totalPoints_ = ud(super._getTotalPoints(_pointsPerMatchCur, _matchIndex, _winningTeamId)).add(
             ud(_pointsPerMatchCur).mul(

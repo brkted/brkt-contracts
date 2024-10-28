@@ -62,6 +62,14 @@ contract Competition is CompetitionState, ICompetition {
      * @inheritdoc ICompetition
      */
     function completeMatch(uint256 _matchId, uint8 _winningTeamId) external onlyOwner whenInProgress {
+        uint256 matchesCur = _getCurRoundMatchesNum();
+        uint256 startingIdx = numTeams - _getTeamSizeCur();
+        if (_matchId >= matchesCur + startingIdx || _matchId < startingIdx) {
+            revert InvalidMatchId(_matchId);
+        }
+        if (bracketProgression[_matchId].isCompleted) {
+            revert MatchAlreadyCompleted(_matchId);
+        }
         _completeMatch(_matchId, _winningTeamId);
     }
 
@@ -170,14 +178,6 @@ contract Competition is CompetitionState, ICompetition {
     }
 
     function _completeMatch(uint256 _matchId, uint8 _winningTeamId) internal virtual {
-        uint256 matchesCur = _getCurRoundMatchesNum();
-        uint256 startingIdx = numTeams - _getTeamSizeCur();
-        if (_matchId >= matchesCur + startingIdx || _matchId < startingIdx) {
-            revert InvalidMatchId(_matchId);
-        }
-        if (bracketProgression[_matchId].isCompleted) {
-            revert MatchAlreadyCompleted(_matchId);
-        }
         // For trustlessness, we should check that the winning team is competing in this match
         bracketProgression[_matchId] = MatchOutcome(_winningTeamId, true);
 
@@ -225,7 +225,7 @@ contract Competition is CompetitionState, ICompetition {
         uint256 startingIdx = numTeams - teamSizeCur;
         for (uint256 i = 0; i < numMatches; i++) {
             if (!bracketProgression[i + startingIdx].isCompleted) {
-                bracketProgression[i + startingIdx] = MatchOutcome(_matchResults[i], true);
+                _completeMatch(i + startingIdx, _matchResults[i]);
             }
         }
     }

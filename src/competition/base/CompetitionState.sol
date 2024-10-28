@@ -9,8 +9,6 @@ import {BitMaps} from "src/libraries/BitMaps.sol";
 import {MatchOutcome} from "src/interfaces/ICompetition.sol";
 import {ICompetitionFactory} from "src/interfaces/ICompetitionFactory.sol";
 
-import "forge-std/console.sol";
-
 /// @title Competition State
 /// @author BRKT
 /// @notice Contract used to hold the contract state and shared functions that read/write state
