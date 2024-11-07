@@ -157,12 +157,17 @@ contract PredictableCompetition is PredictableCompetitionState, IPredictableComp
     function _saveUserPrediction(address _user, uint8[] calldata _matchPredictions) internal {
         uint256 numMatches = _matchPredictions.length;
         bool hasBracket = _registeredUsers.contains(_user);
+        // Allow users to create new brackets for other accounts (since the _user is the only one who can claim their
+        // prize), however the user should be the only one to modify their own bracket since it's tied to their address
+        // This allows the CompetitionRouter to create brackets for users easily
+        if (hasBracket && msg.sender != _user) {
+            revert InvalidSender();
+        }
         if (numMatches != numTeams - 1) {
             revert InvalidCompetitionPredictionLength(numTeams - 1, numMatches);
         }
         for (uint256 i = 0; i < numMatches; i++) {
             if (!hasBracket) {
-                matchPredictionsToUser[i][_matchPredictions[i]].add(_user);
                 _addUserMatchPrediction(_user, i, _matchPredictions[i]);
                 continue;
             }
@@ -224,7 +229,7 @@ contract PredictableCompetition is PredictableCompetitionState, IPredictableComp
             }
         }
         // Return the score as a percentage of the total possible score with 6 decimal places of precision
-        if(totalPoints != 0) {
+        if (totalPoints != 0) {
             scorePercent_ = (userPoints * 1e6) / totalPoints;
         }
     }

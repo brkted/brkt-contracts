@@ -325,10 +325,11 @@ contract PaidPredictableCompetition is PaidPredictableCompetitionState, IPaidPre
         if (!claimedRewards[_user] && hasFinished) {
             uint256 percentOfTotal = _getUserScorePercent(_user);
             // percentOfTotal is a number between 0 and 1e6, so we divide by 1e6 to get the relative amount of token
-            pendingRewards_ = totalRegistrationReserves * percentOfTotal / 1e6;
             if (competitionFactory.protocolFee() > 0) {
                 pendingRewards_ = mulDiv(totalRegistrationReserves, 1e6 - competitionFactory.protocolFee(), 1e6)
                     * percentOfTotal / 1e6;
+            } else {
+                pendingRewards_ = totalRegistrationReserves * percentOfTotal / 1e6;
             }
         }
     }

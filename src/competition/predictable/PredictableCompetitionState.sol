@@ -15,6 +15,7 @@ abstract contract PredictableCompetitionState is Competition {
     using EnumerableSet for EnumerableSet.AddressSet;
     using BitMaps for BitMaps.BitMap;
 
+    error InvalidSender();
     error InvalidCompetitionPredictionLength(uint256 _expectedLength, uint256 _actualLength);
 
     // <<>><<>><<>><<>><<>><<>><<>><<>><<>><<>><<>><<>><<>><<>><<>><<>>
@@ -54,4 +55,3 @@ abstract contract PredictableCompetitionState is Competition {
 
     constructor(address _competitionFactory) Competition(_competitionFactory) {}
 }
-
