@@ -1,0 +1,16 @@
+[package]
+name = "brkt"
+version = "1.0.0"
+authors = []
+
+[addresses]
+brkt_addr = '15262d5a3c5f1d75c41d16a365b751935fa2afa2216425e165fbfc3c0123bb62'
+
+[dev-addresses]
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dev-dependencies]
